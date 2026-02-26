@@ -7,7 +7,9 @@ import "./styles.css";
 const client = new ApolloClient({
   link: new HttpLink({
     uri: import.meta.env.VITE_GATEWAY_URL || "http://localhost:4000/graphql",
-    headers: { "x-user-id": "u1" }
+    headers: {
+      "x-user-id": import.meta.env.VITE_USER_ID || "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    }
   }),
   cache: new InMemoryCache()
 });

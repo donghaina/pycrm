@@ -10,10 +10,13 @@ const CREATE_MUTATION = gql`
   }
 `;
 
+const DEFAULT_USER_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"; // SALES
+const DEFAULT_CHILD_COMPANY_ID = "22222222-2222-2222-2222-222222222222"; // CA child company
+
 export default function DealCreate({ onCreated }: { onCreated: (id: string) => void }) {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("1000");
-  const [childCompanyId, setChildCompanyId] = useState("c1");
+  const [childCompanyId, setChildCompanyId] = useState(DEFAULT_CHILD_COMPANY_ID);
 
   const [create, { loading, error }] = useMutation(CREATE_MUTATION, {
     onCompleted: (data) => onCreated(data.createDeal.id)
@@ -29,7 +32,17 @@ export default function DealCreate({ onCreated }: { onCreated: (id: string) => v
         <button
           className="px-3 py-2 text-sm rounded bg-brand-700 text-white"
           disabled={loading}
-          onClick={() => create({ variables: { title, amount: parseFloat(amount), currency: "CAD", childCompanyId, createdByUserId: "u1" } })}
+          onClick={() =>
+            create({
+              variables: {
+                title,
+                amount: parseFloat(amount),
+                currency: "CAD",
+                childCompanyId,
+                createdByUserId: DEFAULT_USER_ID
+              }
+            })
+          }
         >
           {loading ? "Creating..." : "Create"}
         </button>

@@ -12,14 +12,20 @@ async def get_allowed_company_ids(user_id: str):
     role = me.get("role")
     company_id = me.get("companyId")
 
-    if role in PARENT_ADMIN:
-        # For parent admins, allow all children. If not a parent, fall back to own company.
-        children = data.get("childCompanies") or []
-        if children:
-            return {c.get("id") for c in children}, role
-        return {company_id}, role
+    # Always include own company
+    allowed = set()
+    if company_id:
+        allowed.add(str(company_id))
 
-    return {company_id}, role
+    # Parent admins can also see child companies
+    if role in PARENT_ADMIN:
+        children = data.get("childCompanies") or []
+        for c in children:
+            cid = c.get("id")
+            if cid:
+                allowed.add(str(cid))
+
+    return allowed, role
 
 async def ensure_can_write(user_id: str):
     allowed, role = await get_allowed_company_ids(user_id)
