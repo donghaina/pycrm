@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.env
+.venv/
+
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Docker / logs
+*.log
+/docs/
+/data-1772123871844.csv
+/.env
+/files.txt

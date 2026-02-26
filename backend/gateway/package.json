@@ -1,0 +1,14 @@
+{
+  "name": "pycrm-gateway",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx/esm src/index.ts"
+  },
+  "dependencies": {
+    "@apollo/gateway": "^2.5.7",
+    "@apollo/server": "^4.10.0",
+    "graphql": "^16.8.1",
+    "tsx": "^4.7.2"
+  }
+}

@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: crm
+      POSTGRES_USER: donghn
+      POSTGRES_PASSWORD: "Work19293949?"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  redpanda:
+    image: redpandadata/redpanda:v24.1.12
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - "1G"
+      - --reserve-memory
+      - "0M"
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+
+  org-service:
+    build: ./backend/org-service
+    environment:
+      DATABASE_URL: postgresql+psycopg://donghn:Work19293949?@postgres:5432/crm
+      KAFKA_BROKERS: redpanda:9092
+    depends_on:
+      - postgres
+      - redpanda
+    ports:
+      - "4001:4001"
+
+  crm-service:
+    build: ./backend/crm-service
+    environment:
+      DATABASE_URL: postgresql+psycopg://donghn:Work19293949?@postgres:5432/crm
+      KAFKA_BROKERS: redpanda:9092
+      ORG_SERVICE_URL: http://org-service:4001/graphql
+    depends_on:
+      - postgres
+      - redpanda
+      - org-service
+    ports:
+      - "4002:4002"
+
+  review-worker:
+    build: ./backend/review-worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://donghn:Work19293949?@postgres:5432/crm
+      KAFKA_BROKERS: redpanda:9092
+    depends_on:
+      - postgres
+      - redpanda
+
+  gateway:
+    build: ./backend/gateway
+    environment:
+      ORG_SUBGRAPH_URL: http://org-service:4001/graphql
+      CRM_SUBGRAPH_URL: http://crm-service:4002/graphql
+    depends_on:
+      - org-service
+      - crm-service
+    ports:
+      - "4000:4000"
+
+  web:
+    build: ./frontend/web
+    environment:
+      VITE_GATEWAY_URL: http://localhost:4000/graphql
+    depends_on:
+      - gateway
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
