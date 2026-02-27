@@ -14,4 +14,7 @@ class Base(DeclarativeBase):
 def init_db():
     with engine.begin() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS crm"))
+        conn.execute(text("ALTER TABLE IF EXISTS crm.processed_events ADD COLUMN IF NOT EXISTS error_type TEXT"))
+        conn.execute(text("ALTER TABLE IF EXISTS crm.processed_events ADD COLUMN IF NOT EXISTS error_stage TEXT"))
+        conn.execute(text("ALTER TABLE IF EXISTS crm.processed_events ADD COLUMN IF NOT EXISTS attempt_count INT DEFAULT 0"))
     Base.metadata.create_all(bind=engine)
