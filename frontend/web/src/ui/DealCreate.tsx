@@ -74,7 +74,11 @@ export default function DealCreate({ onCreated }: { onCreated: (id: string) => v
   }, [options, childCompanyId]);
 
   const [create, { loading, error }] = useMutation(CREATE_MUTATION, {
-    onCompleted: (data) => onCreated(data.createDeal.id)
+    onCompleted: (data) => {
+      onCreated(data.createDeal.id);
+      setTitle("");
+      setAmount("1000");
+    }
   });
 
   const loadingCompanies = meLoading || companyLoading;
@@ -110,7 +114,7 @@ export default function DealCreate({ onCreated }: { onCreated: (id: string) => v
           </select>
         </div>
         <button
-          className="px-3 py-2 text-sm rounded bg-brand-700 text-white"
+          className="px-3 py-2 text-sm rounded bg-brand-700 text-white w-fit justify-self-start"
           disabled={loading || !childCompanyId}
           onClick={() =>
             create({

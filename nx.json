@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "npmScope": "pycrm",
+  "affected": {
+    "defaultBase": "main"
+  },
+  "projects": {
+    "org-service": {
+      "root": "backend/org-service"
+    },
+    "crm-service": {
+      "root": "backend/crm-service"
+    },
+    "review-worker": {
+      "root": "backend/review-worker"
+    },
+    "gateway": {
+      "root": "backend/gateway"
+    },
+    "web": {
+      "root": "frontend/web"
+    }
+  }
+}
