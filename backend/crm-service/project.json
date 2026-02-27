@@ -1,0 +1,19 @@
+{
+  "name": "crm-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose up -d --build crm-service"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose exec -T crm-service python manage.py test crm_app"
+      }
+    }
+  }
+}

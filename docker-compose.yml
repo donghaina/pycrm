@@ -38,7 +38,7 @@ services:
   org-service:
     build: ./backend/org-service
     environment:
-      DATABASE_URL: postgresql+psycopg://donghn:Work19293949?@postgres:5432/crm
+      DATABASE_URL: postgresql+psycopg://donghn:Work19293949%3F@postgres:5432/crm
       KAFKA_BROKERS: redpanda:9092
     depends_on:
       - postgres
@@ -49,7 +49,7 @@ services:
   crm-service:
     build: ./backend/crm-service
     environment:
-      DATABASE_URL: postgresql+psycopg://donghn:Work19293949?@postgres:5432/crm
+      DATABASE_URL: postgresql+psycopg://donghn:Work19293949%3F@postgres:5432/crm
       KAFKA_BROKERS: redpanda:9092
       ORG_SERVICE_URL: http://org-service:4001/graphql
     depends_on:
@@ -62,7 +62,7 @@ services:
   review-worker:
     build: ./backend/review-worker
     environment:
-      DATABASE_URL: postgresql+psycopg://donghn:Work19293949?@postgres:5432/crm
+      DATABASE_URL: postgresql+psycopg://donghn:Work19293949%3F@postgres:5432/crm
       KAFKA_BROKERS: redpanda:9092
     depends_on:
       - postgres

@@ -1,10 +1,8 @@
 # pycrm
 
-Event-driven CRM scaffold based on `docs/requirements.md`.
-
 This project demonstrates a **multi-service, event-driven CRM system** built with:
 
-* **Python (FastAPI + Strawberry GraphQL)** for business services
+* **Python (Django + Graphene)** for business services
 * **Apollo Federation Gateway (Node.js)** for API aggregation
 * **Kafka (Redpanda)** for asynchronous deal review
 * **React + TypeScript + Tailwind + Apollo Client** for the frontend
@@ -139,6 +137,39 @@ docker compose up --build
 ```
 http://localhost:3000
 ```
+
+---
+
+# Nx Workspace
+
+This repo is also wired as a minimal Nx workspace for convenience. You can use Nx to
+start individual services (via Docker Compose) and run the CRM unit tests.
+
+Install Nx (one-time):
+
+```bash
+npm install
+```
+
+Common commands (run from repo root):
+
+```bash
+# Full stack
+npx nx run stack:up
+npx nx run stack:down
+
+# Services
+npx nx run org-service:serve
+npx nx run crm-service:serve
+npx nx run review-worker:serve
+npx nx run gateway:serve
+npx nx run web:serve
+
+# Tests
+npx nx run crm-service:test
+```
+
+Nx does not change the runtime behavior; it simply wraps the existing Docker Compose commands.
 
 ---
 
@@ -287,6 +318,20 @@ docker compose logs -f gateway
 docker compose logs -f crm-service
 docker compose logs -f review-worker
 ```
+
+---
+
+# Testing (Current + Next)
+
+Current:
+
+* `crm-service` has unit tests for authorization logic (`get_allowed_company_ids`, `ensure_can_write`).
+
+Next to test:
+
+* GraphQL mutation permissions (e.g. `createDeal`, `submitDealForReview`) with role/tenant boundaries.
+* Review-worker idempotency (duplicate event IDs should not reprocess).
+* End-to-end async flow: submit → PENDING → APPROVED/REJECTED with UI polling.
 
 ---
 
