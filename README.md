@@ -1,29 +1,24 @@
 # pycrm
 
-This project demonstrates a **multi-service, event-driven CRM system** built with:
+A multi-service, event-driven CRM system built with:
 
-* **Python (Django + Graphene)** for business services
-* **Apollo Federation Gateway (Node.js)** for API aggregation
-* **Kafka (Redpanda)** for asynchronous deal review
-* **React + TypeScript + Tailwind + Apollo Client** for the frontend
-* **PostgreSQL** as the primary datastore
+* Python (Django + Graphene)
+* Apollo Federation Gateway (Node.js)
+* Kafka (Redpanda)
+* React + TypeScript + Tailwind + Apollo Client
+* PostgreSQL
 
-![img.png](imgs/img.png)
-![img_1.png](imgs/img_1.png)
-![img_2.png](imgs/img_2.png)
-![img_3.png](imgs/img_3.png)
-![img_4.png](imgs/img_4.png)
-The system showcases:
+Key features:
 
-* GraphQL Federation (multiple subgraphs composed behind a single gateway)
-* Asynchronous processing with Kafka
+* GraphQL Federation (org + crm subgraphs)
+* Asynchronous review workflow via Kafka
 * Idempotent event consumption
 * Multi-tenant authorization via user context
-* Full UUID consistency across DB + ORM + services
+* UUID consistency across DB + services
 
 ---
 
-# Architecture Overview
+**Architecture Overview**
 
 ```
 Frontend (React + Apollo Client)
@@ -49,7 +44,7 @@ org-service         crm-service
 
 ---
 
-# Structure
+**Repo Structure**
 
 ```
 frontend/
@@ -66,91 +61,60 @@ docker-compose.yml     # One-command orchestration
 
 ---
 
-# Services
+**Services**
 
-## org-service
+org-service
 
-* Manages:
+* Manages companies (parent + child) and users (roles, tenant)
+* Exposes `me`, `company`, `childCompanies` queries
+* Source of truth for org visibility
 
-  * Companies (parent + child)
-  * Users (roles, tenant)
-* Provides:
+crm-service
 
-  * `me` query (based on `x-user-id`)
-  * Authorization context (allowed company IDs)
+* Manages deals
+* Mutations: `createDeal`, `submitDealForReview`
+* Enforces tenant isolation and role-based write access
+* Publishes Kafka event: `deal.review.requested`
 
-## crm-service
+review-worker
 
-* Manages:
+* Consumes `deal.review.requested`
+* Applies auto-approval rule
+* Updates deal review fields and stage
+* Retry strategy in code:
+* In-process retry with backoff (`REVIEW_WORKER_MAX_RETRIES`, `REVIEW_WORKER_RETRY_BACKOFF_SEC`)
+* Manual Kafka commit after success/final failure
+* Failure records stored in `crm.processed_events` with error details
 
-  * Deals
-* Mutations:
-
-  * `createDeal`
-  * `submitDealForReview`
-* Emits Kafka event:
-
-  * `deal.review.requested`
-* Enforces:
-
-  * Tenant isolation
-  * Role-based write access
-
-## review-worker
-
-* Kafka consumer
-* Idempotent via `crm.processed_events`
-* Applies simple scoring rule:
-
-  * amount < 10000 → APPROVED
-  * otherwise → REJECTED
-* Updates:
-
-  * review_status
-  * review_score
-  * review_reason
-  * version
-* Retry strategy (code-level):
-
-  * In-process retry with backoff (`REVIEW_WORKER_MAX_RETRIES`, `REVIEW_WORKER_RETRY_BACKOFF_SEC`)
-  * Manual Kafka commit after success/final failure
-  * Failures recorded in `crm.processed_events` with error for observability
-
-## gateway
+gateway
 
 * Apollo Federation Gateway
 * Composes `org` and `crm` subgraphs
-* Forwards `x-user-id` header to downstream services
+* Forwards `x-user-id` to downstream services
 
-## frontend
+frontend
 
-* React + TypeScript
-* Apollo Client
-* Polling for asynchronous state updates
-* Displays:
-
-  * Deal list
-  * Create deal page
-  * Deal detail page (status badge + submit action)
-  * Review status transitions
+* React + Apollo Client
+* Polling for async state updates
+* Pages: deal list, create, detail (status badge + submit action)
 
 ---
 
-# Quick Start
+**Quick Start**
 
-## 1️⃣ Start everything
+1. Start everything
 
 ```bash
 docker compose up --build
 ```
 
-## 2️⃣ Open UI
+2. Open UI
 
 ```
 http://localhost:3000
 ```
 
-UI pages:
+UI routes:
 
 * `#/deals` — Deal list
 * `#/create` — Create deal
@@ -166,10 +130,9 @@ Deals List (#/deals)
 
 ---
 
-# Nx Workspace
+**Nx Workspace**
 
-This repo is also wired as a minimal Nx workspace for convenience. You can use Nx to
-start individual services (via Docker Compose) and run the CRM unit tests.
+This repo is wired as a minimal Nx workspace to run services and tests via Docker Compose.
 
 Install Nx (one-time):
 
@@ -195,11 +158,9 @@ npx nx run web:serve
 npx nx run crm-service:test
 ```
 
-Nx does not change the runtime behavior; it simply wraps the existing Docker Compose commands.
-
 ---
 
-# Manual API Verification (Gateway – :4000)
+**Manual API Verification (Gateway – :4000)**
 
 All requests must include:
 
@@ -207,9 +168,7 @@ All requests must include:
 x-user-id: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
 ```
 
----
-
-## 1) Verify authentication context
+1) Verify authentication context
 
 ```bash
 curl 'http://localhost:4000/graphql' \
@@ -218,11 +177,7 @@ curl 'http://localhost:4000/graphql' \
   --data-raw '{"query":"query { me { id email role companyId } }"}'
 ```
 
-Expected: returns SALES user in CA child company.
-
----
-
-## 2) Create a Deal
+2) Create a deal
 
 ```bash
 curl 'http://localhost:4000/graphql' \
@@ -238,9 +193,7 @@ reviewStatus: NOT_REQUIRED
 stage: DRAFT
 ```
 
----
-
-## 3) Submit for Review (Asynchronous)
+3) Submit for review (async)
 
 ```bash
 curl 'http://localhost:4000/graphql' \
@@ -249,16 +202,14 @@ curl 'http://localhost:4000/graphql' \
   --data-raw '{"query":"mutation { submitDealForReview(dealId:\"<DEAL_ID>\") { id reviewStatus stage } }"}'
 ```
 
-Immediate expected response:
+Immediate response:
 
 ```
 reviewStatus: PENDING
 stage: SUBMITTED
 ```
 
----
-
-## 4) Poll for Final Status
+4) Poll for final status
 
 ```bash
 curl 'http://localhost:4000/graphql' \
@@ -269,75 +220,36 @@ curl 'http://localhost:4000/graphql' \
 
 After a few seconds:
 
-* If amount < 10000 → `APPROVED`
-* Otherwise → `REJECTED`
+* amount < 10000 → APPROVED
+* otherwise → REJECTED
 
 ---
 
-# Key Design Decisions
+**Key Design Decisions**
 
-## 1️⃣ Why GraphQL Federation?
-
-* Frontend talks to **one endpoint only**
-* Gateway composes multiple domain services
-* Clean separation of org domain and crm domain
-
-Python currently lacks a production-grade federation gateway, so Apollo Gateway (Node) is used.
+* GraphQL Federation keeps the frontend on a single endpoint.
+* Asynchronous review simulates an external approval system and enforces eventual consistency.
+* `crm.processed_events` provides idempotency and observability for Kafka consumption.
+* Tenant access is enforced server-side using `x-user-id` and org visibility.
+* UUIDs are consistent across DB, ORM, and GraphQL.
 
 ---
 
-## 2️⃣ Why Asynchronous Review?
+**Testing**
 
-* Review logic simulates external approval system
-* Demonstrates:
+Current:
 
-  * Event publishing
-  * Consumer group
-  * Idempotency
-  * Event-driven state transitions
+* `crm-service` unit tests for auth (`get_allowed_company_ids`, `ensure_can_write`).
+* `review-worker` unit tests for review decision, idempotency, and retry handling.
 
----
+Next to test:
 
-## 3️⃣ Idempotency Strategy
-
-`crm.processed_events` table ensures:
-
-* Same event ID is not processed twice
-* Safe retry behavior
+* GraphQL mutation permissions with role/tenant boundaries.
+* End-to-end async flow with UI polling.
 
 ---
 
-## 4️⃣ UUID Consistency
-
-All services use:
-
-* PostgreSQL UUID
-* SQLAlchemy `UUID(as_uuid=True)`
-* Explicit `uuid.UUID()` conversion in resolvers/workers
-
-This avoids type mismatch issues (`uuid = varchar`).
-
----
-
-## 5️⃣ Multi-Tenant Authorization
-
-* Tenant boundary enforced by `company_id`
-* `org-service` resolves allowed company IDs
-* `crm-service` checks write permissions before mutation
-
-Auth is simulated using:
-
-```
-x-user-id
-```
-
-In production, this would be replaced with JWT verification.
-
----
-
-# Observability
-
-Useful logs:
+**Observability**
 
 ```bash
 docker compose logs -f gateway
@@ -347,45 +259,39 @@ docker compose logs -f review-worker
 
 ---
 
-# Testing (Current + Next)
-
-Current:
-
-* `crm-service` has unit tests for authorization logic (`get_allowed_company_ids`, `ensure_can_write`).
-* `review-worker` has unit tests for the review decision rule (APPROVED/REJECTED threshold).
-
-Next to test:
-
-* GraphQL mutation permissions (e.g. `createDeal`, `submitDealForReview`) with role/tenant boundaries.
-* Review-worker idempotency (duplicate event IDs should not reprocess).
-* End-to-end async flow: submit → PENDING → APPROVED/REJECTED with UI polling.
-
----
-
-# Environment
+**Environment**
 
 See `.env.example` for configurable ports and service URLs.
 
 ---
 
-# Production Hardening (Not Implemented but Designed For)
+**Screenshots (Optional)**
+
+![img.png](imgs/img.png)
+![img_1.png](imgs/img_1.png)
+![img_2.png](imgs/img_2.png)
+![img_3.png](imgs/img_3.png)
+![img_4.png](imgs/img_4.png)
+
+---
+
+**Production Hardening (Not Implemented)**
 
 * JWT authentication
 * Dead-letter queue
-* Retry strategy
 * Outbox pattern for reliable publishing
 * Metrics + tracing
-* Circuit breaker
+* Circuit breakers
 * Schema registry for event contracts
 
 ---
 
-# Summary
+**Summary**
 
-This scaffold demonstrates:
+This project demonstrates:
 
 * Multi-service GraphQL Federation
 * Event-driven asynchronous processing
-* Idempotent Kafka consumer
+* Idempotent Kafka consumer with retries
 * Tenant-aware authorization
 * Full-stack integration (React → Gateway → Services → Kafka → DB)
