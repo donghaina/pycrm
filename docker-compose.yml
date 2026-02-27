@@ -53,6 +53,10 @@ services:
         condition: service_started
     ports:
       - "4001:4001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4002/graphql" ]
+      interval: 10s
+      retries: 5
 
   crm-service:
     build: ./backend/crm-service
@@ -70,6 +74,10 @@ services:
         condition: service_started
     ports:
       - "4002:4002"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4002/graphql" ]
+      interval: 10s
+      retries: 5
 
   review-worker:
     build: ./backend/review-worker
@@ -91,9 +99,9 @@ services:
       CRM_SUBGRAPH_URL: http://crm-service:4002/graphql
     depends_on:
       org-service:
-        condition: service_started
+        condition: service_healthy
       crm-service:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "4000:4000"
 
