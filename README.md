@@ -105,7 +105,7 @@ frontend
 1. Start everything
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
 2. Open UI
@@ -127,6 +127,51 @@ Deals List (#/deals)
    ├─ Create → Create Deal (#/create) → Submit → Deal Detail (#/deal/:id)
    └─ Select Deal → Deal Detail (#/deal/:id)
 ```
+
+---
+
+**Deployment Checklist (Final)**
+
+README checklist:
+
+* Architecture overview and service boundaries
+* One-command Docker Compose setup
+* Service URLs and ports
+* Asynchronous workflow (PENDING → APPROVED/REJECTED)
+* Server-side authorization notes
+* Nx workspace usage (optional)
+* Tests (current + next)
+
+Run commands:
+
+```bash
+# Start full stack
+docker compose up -d --build
+
+# Stop
+docker compose down
+```
+
+Nx (optional):
+
+```bash
+npx nx run stack:up
+npx nx run stack:down
+npx nx run crm-service:test
+```
+
+Ports to expose:
+
+* End users: `3000` (Web) and `4000` (GraphQL Gateway)
+* Internal only: `4001`, `4002`, `5432`, `9092`, `9644`
+* If using a reverse proxy (Nginx/Traefik): expose only `80/443` and route `/graphql` → `4000`
+
+Notes:
+
+* `x-user-id` is a mock auth header for this challenge.
+* Kafka consumption is idempotent via `crm.processed_events`.
+* Worker retries and failure details are recorded for observability.
+* If gateway fails with `ECONNREFUSED`, restart `gateway` after subgraphs are up.
 
 ---
 
