@@ -145,10 +145,7 @@ README checklist:
 Run commands:
 
 ```bash
-# Start full stack
 docker compose up -d --build
-
-# Stop
 docker compose down
 ```
 
@@ -188,18 +185,13 @@ npm install
 Common commands (run from repo root):
 
 ```bash
-# Full stack
 npx nx run stack:up
 npx nx run stack:down
-
-# Services
 npx nx run org-service:serve
 npx nx run crm-service:serve
 npx nx run review-worker:serve
 npx nx run gateway:serve
 npx nx run web:serve
-
-# Tests
 npx nx run crm-service:test
 ```
 
