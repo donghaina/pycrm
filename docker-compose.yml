@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: donghn
       POSTGRES_PASSWORD: "Work19293949?"
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -54,8 +54,9 @@ services:
     ports:
       - "4001:4001"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4002/graphql" ]
+      test: [ "CMD-SHELL", "python -c \"import json,urllib.request as u; req=u.Request('http://localhost:4001/graphql', data=json.dumps({'query':'{__typename}'}).encode(), headers={'Content-Type':'application/json'}); u.urlopen(req)\"" ]
       interval: 10s
+      timeout: 5s
       retries: 5
 
   crm-service:
@@ -75,8 +76,9 @@ services:
     ports:
       - "4002:4002"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4002/graphql" ]
+      test: [ "CMD-SHELL", "python -c \"import json,urllib.request as u; req=u.Request('http://localhost:4002/graphql', data=json.dumps({'query':'{__typename}'}).encode(), headers={'Content-Type':'application/json'}); u.urlopen(req)\"" ]
       interval: 10s
+      timeout: 5s
       retries: 5
 
   review-worker:
