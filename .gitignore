@@ -32,3 +32,4 @@ build/
 /.nx/cache/parsed-lock-file.json
 /.nx/cache/project-graph.json
 /.nx/cache/run.json
+/.nx/

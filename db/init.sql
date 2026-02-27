@@ -159,6 +159,9 @@ CREATE TABLE IF NOT EXISTS crm.processed_events (
   topic         TEXT NOT NULL,
   status        TEXT NOT NULL,
   error         TEXT NULL,
+  error_type    TEXT NULL,
+  error_stage   TEXT NULL,
+  attempt_count INT NOT NULL DEFAULT 0,
   processed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   CONSTRAINT chk_processed_events_status

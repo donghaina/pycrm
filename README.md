@@ -8,6 +8,11 @@ This project demonstrates a **multi-service, event-driven CRM system** built wit
 * **React + TypeScript + Tailwind + Apollo Client** for the frontend
 * **PostgreSQL** as the primary datastore
 
+![img.png](imgs/img.png)
+![img_1.png](imgs/img_1.png)
+![img_2.png](imgs/img_2.png)
+![img_3.png](imgs/img_3.png)
+![img_4.png](imgs/img_4.png)
 The system showcases:
 
 * GraphQL Federation (multiple subgraphs composed behind a single gateway)
@@ -105,6 +110,11 @@ docker-compose.yml     # One-command orchestration
   * review_score
   * review_reason
   * version
+* Retry strategy (code-level):
+
+  * In-process retry with backoff (`REVIEW_WORKER_MAX_RETRIES`, `REVIEW_WORKER_RETRY_BACKOFF_SEC`)
+  * Manual Kafka commit after success/final failure
+  * Failures recorded in `crm.processed_events` with error for observability
 
 ## gateway
 
@@ -120,6 +130,8 @@ docker-compose.yml     # One-command orchestration
 * Displays:
 
   * Deal list
+  * Create deal page
+  * Deal detail page (status badge + submit action)
   * Review status transitions
 
 ---
@@ -136,6 +148,20 @@ docker compose up --build
 
 ```
 http://localhost:3000
+```
+
+UI pages:
+
+* `#/deals` — Deal list
+* `#/create` — Create deal
+* `#/deal/:id` — Deal detail
+
+UI flow (simplified):
+
+```
+Deals List (#/deals)
+   ├─ Create → Create Deal (#/create) → Submit → Deal Detail (#/deal/:id)
+   └─ Select Deal → Deal Detail (#/deal/:id)
 ```
 
 ---
@@ -326,6 +352,7 @@ docker compose logs -f review-worker
 Current:
 
 * `crm-service` has unit tests for authorization logic (`get_allowed_company_ids`, `ensure_can_write`).
+* `review-worker` has unit tests for the review decision rule (APPROVED/REJECTED threshold).
 
 Next to test:
 
