@@ -24,3 +24,11 @@ build/
 /data-1772123871844.csv
 /.env
 /files.txt
+/.nx/cache/d/server-process.json
+/.nx/cache/terminalOutputs/5661854254687271443
+/.nx/cache/file-map.json
+/.nx/cache/lockfile.hash
+/.nx/cache/nx_files.nxt
+/.nx/cache/parsed-lock-file.json
+/.nx/cache/project-graph.json
+/.nx/cache/run.json
